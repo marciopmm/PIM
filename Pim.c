@@ -35,8 +35,10 @@ typedef struct{
 
 participante cadastrarParticipante();
 void reservaAssento(reserva listaReservas[]);
+void sortearBrinde(reserva listaReservas[]);
 void contadoresAssento(int quant_assento);
 int verificarPosicao(reserva listaReservas[], int posicaoDesejada);
+int obterIndicePosicao(reserva listaReservas[], int posicaoDesejada);
 //void ticketHora();
 //void sortearBrinde();
 void limpaBuffer();
@@ -65,7 +67,7 @@ int main(void)
 		switch(opc)
 		{
 			case 1: reservaAssento(listaReservas); break;
-			//case 2: sorteioBrinde(); break;
+			case 2: sortearBrinde(listaReservas); break;
 		}
 	}
 	while(opc != 0);
@@ -91,20 +93,43 @@ participante cadastrarParticipante()
 	char pne[1];
 	printf("\nO participante possui alguma necessidade especial? (S/N): ");
 	scanf("%s", &pne);
-	pne[0] = toupper(pne[0]);
+	if (toupper(pne[0]) == 'S') {
+		part.pne = 1;
+	} else {
+		part.pne = 0;
+	}
 
 	char convPalestrante[1];
 	printf("\nO participante eh convidado de algum palestrante? (S/N): ");
 	scanf("%s", &convPalestrante);
-	convPalestrante[0] = toupper(convPalestrante[0]);
-
+	if (toupper(convPalestrante[0]) == 'S') {
+		part.convidadoPalestrante = 1;
+	} else {
+		part.convidadoPalestrante = 0;
+	}
+ 
 	system("cls");
+	char msg1[4] = "";
+	char msg2[4] = "";
+
+	if (part.pne == 1) {
+		strcpy(msg1, "SIM");
+	} else {
+		strcpy(msg1, "NAO");
+	}
+
+	if (part.convidadoPalestrante == 1) {
+		strcpy(msg2, "SIM");
+	} else {
+		strcpy(msg2, "NAO");
+	}
+
 	printf("\nVerifique as informacoes inseridas e confira se os dados estao corretos.\n");
 	printf("\n Nome: %s\n Cpf: %s\n Portador de Necessidades Especiais: %s\n Convidado de Palestrante: %s\n", 
 			part.nome, 
 			part.cpf, 
-			pne[0] == 'S' ? "SIM" : "NAO", 
-			convPalestrante[0] == 'S' ? "SIM" : "NAO");
+			msg1, 
+			msg2);
 
 	if(part.categoria == 1)
 	{
@@ -117,26 +142,6 @@ participante cadastrarParticipante()
 	else
 	{
 		printf(" O participante eh um Estudante!\n");
-	}
-
-	if(*pne == 'S')
-	{
-		printf(" O participante possui deficiencia\n");
-		part.pne = 1;
-	}
-	else
-	{
-		part.pne = 0;
-	}
-
-	if(*convPalestrante == 'S')
-	{
-		printf(" O participante eh convidado de um palestrante\n");
-		part.convidadoPalestrante = 1;
-	}
-	else
-	{
-		part.convidadoPalestrante = 0;
 	}
 
 	system("pause");
@@ -157,11 +162,17 @@ void reservaAssento(reserva listaReservas[])
 		int posicaoDesejada = 0;
 		while (posicaoDesejada == 0)
 		{
-			printf("Selecione a posição desejada (entre %d e %d): ", posicaoInicialPalestrantesConvidados, quant_assento);
+			printf("Selecione a posicao desejada (entre %d e %d): ", posicaoInicialPalestrantesConvidados, quant_assento);
 			scanf("%d", &posicaoDesejada);
 
 			// Verificar se a posição está ocupada
 			posicaoDesejada = verificarPosicao(listaReservas, posicaoDesejada);
+
+			if (posicaoDesejada == 0) {
+				printf("A posicao %d ja esta ocupada! Por favor, selecione outra.\n");
+				system("pause");
+				system("cls");
+			}
 		}
 
 		// Caso livre, reservar.
@@ -260,8 +271,6 @@ int verificarPosicao(reserva listaReservas[], int posicaoDesejada)
 		reserva r = listaReservas[i];
 		if (r.n_Assento == posicaoDesejada)
 		{
-			printf("A posicao %d ja esta ocupada! Por favor, selecione outra.\n");
-			system("pause");
 			posicaoDesejada = 0;
 			break;
 		}
@@ -270,12 +279,41 @@ int verificarPosicao(reserva listaReservas[], int posicaoDesejada)
 	return (posicaoDesejada);
 }
 
+int obterIndicePosicao(reserva listaReservas[], int posicaoDesejada)
+{
+	for (int i = 0; i < quant_assento; i++)
+	{
+		if (listaReservas[i].n_Assento == posicaoDesejada)
+		{
+			return (i);
+		}
+	}
+
+	return -1;
+}
+
 void inicializarLista(reserva lista[]) 
 {
 	for (int i = 0; i < quant_assento; i++)
 	{
 		lista[i].n_Assento = 0;
 	}
+}
+
+void sortearBrinde(reserva listaReservas[]) 
+{
+	int assentoBrinde = 0;
+	int indicePosicao = -1;
+	do {
+		assentoBrinde = rand() % 100;
+		indicePosicao = obterIndicePosicao(listaReservas, assentoBrinde);
+	} while (indicePosicao == -1 || (assentoBrinde >= 0 && assentoBrinde <= 20));
+
+	system("cls");
+	printf("=== SORTEIO DE BRINDE ===\n");
+	printf("O assento vencedor foi: %d\n", listaReservas[indicePosicao].n_Assento);
+	printf("O convidado vencedor foi: %s\n", listaReservas[indicePosicao].part.nome);
+	system("pause");
 }
 
 void limpaBuffer(){
